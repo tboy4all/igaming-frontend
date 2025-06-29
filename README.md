@@ -1,12 +1,92 @@
-# React + Vite
+# 🎮 iGaming Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend interface of the iGaming platform. Users can register, log in, view a live countdown, join gaming sessions by submitting a guess (1–10), and see real-time results after each session ends.
 
-Currently, two official plugins are available:
+## 🚀 Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React** with **Vite**
+- **Tailwind CSS** for styling
+- **React Toastify** for notifications
+- **React Icons** for UI icons
+- Backend hosted on **Render**
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🔧 Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/tboy4all/igaming-frontend.git
+cd igaming-frontend
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file in the root and add:
+
+```
+VITE_API_BASE_URL=https://igaming-backend-0y7x.onrender.com
+```
+
+This tells the frontend where to send requests.
+
+### 4. Run the development server
+
+```bash
+npm run dev
+```
+
+Your app should now be running at [http://localhost:5173](http://localhost:5173)
+
+---
+
+## 📺 Pages & Features
+
+### ✅ **Authentication**
+
+- `/register` and `/login` pages
+- Token stored in `localStorage`
+- Toast messages on success/error
+
+### 🏠 **Home Page**
+
+- Displays current session countdown
+- Join session button navigates to GamePage
+
+### 🎰 **Game Page**
+
+- Users enter a number between 1–10
+- After session ends, the result is shown
+- Displays all winners and countdown to next session
+
+---
+
+## 🌐 API Integration
+
+The frontend communicates with the following backend endpoints:
+
+- `POST /api/v1/auth/register` – Register a new user
+- `POST /api/v1/auth/login` – Login user and receive JWT
+- `GET /api/v1/game/active-session` – Get current session status
+- `POST /api/v1/game/join` – Join a session with a guess
+- `GET /api/v1/game/last-result` – Get result after session ends
+- `GET /api/v1/game/leaderboard` – Fetch top 10 players by wins
+
+---
+
+## 📦 Production Build
+
+To build for deployment:
+
+```bash
+npm run build
+```
+
+---
