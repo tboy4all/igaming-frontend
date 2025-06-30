@@ -78,52 +78,33 @@ export default function GamePage() {
         const res = await fetch(`${API_BASE_URL}/api/v1/game/last-result`)
         const data = await res.json()
 
+        console.log('Result data:', data)
+
         if (res.ok && data.totalPlayers > 0) {
           setResult(data.winningNumber)
           setPlayersCount(data.totalPlayers)
           setWinners(data.winners)
           setShowResult(true)
           setHasGuessed(false)
-
-          // Start 10s countdown before new session
-          let c = 10
-          setNextSessionCountdown(c)
-          const next = setInterval(() => {
-            c--
-            setNextSessionCountdown(c)
-            if (c <= 0) {
-              clearInterval(next)
-
-              // Reset states for new round
-              setUserGuess(null)
-              setShowResult(false)
-              fetchSession()
-            }
-          }, 1000)
+          startNextSessionCountdown()
         } else {
           attempts++
           if (attempts < maxAttempts) {
             setTimeout(tryFetchResult, 1000)
           } else {
-            // 🚨 FIX: Still show result screen even if no players (or error)
+            //  check if player actual join
+
+            let fallbackPlayersCount = data.totalPlayers
+            if (!fallbackPlayersCount || fallbackPlayersCount === 0) {
+              fallbackPlayersCount = hasGuessed ? 1 : 0
+            }
+
             setResult(data.winningNumber || 'N/A')
-            setPlayersCount(data.totalPlayers || 0)
+            setPlayersCount(fallbackPlayersCount)
             setWinners(data.winners || [])
             setShowResult(true)
-
-            // Start fallback countdown
-            let c = 10
-            setNextSessionCountdown(c)
-            const next = setInterval(() => {
-              c--
-              setNextSessionCountdown(c)
-              if (c <= 0) {
-                clearInterval(next)
-                setUserGuess(null)
-                setShowResult(false)
-                fetchSession()
-              }
-            }, 1000)
+            setHasGuessed(false)
+            startNextSessionCountdown()
           }
         }
       } catch {
@@ -133,6 +114,21 @@ export default function GamePage() {
 
     // Begin first attempt
     tryFetchResult()
+  }
+
+  const startNextSessionCountdown = () => {
+    let c = 10
+    setNextSessionCountdown(c)
+    const next = setInterval(() => {
+      c--
+      setNextSessionCountdown(c)
+      if (c <= 0) {
+        clearInterval(next)
+        setUserGuess(null)
+        setShowResult(false)
+        fetchSession()
+      }
+    }, 1000)
   }
 
   const handleSubmit = async (e) => {
@@ -244,7 +240,10 @@ export default function GamePage() {
           </button>
         </form>
       ) : (
-        <p className='mt-4 text-gray-700'>Waiting for result...</p>
+        <div className='flex flex-col items-center mt-4'>
+          <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-700 mb-2'></div>
+          <p className='text-gray-700'>Waiting for result...</p>
+        </div>
       )}
 
       <p className='mt-6 text-green-700'>{playersCount} users joined</p>
