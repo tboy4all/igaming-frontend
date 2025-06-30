@@ -56,6 +56,11 @@ export default function HomePage() {
       } else {
         setSessionActive(false)
         setCountdown(0)
+
+        // Ensure polling starts when no session is active
+        if (!sessionPollIntervalRef.current) {
+          startPollingForNextSession()
+        }
       }
     } catch {
       toast.error('Failed to fetch session info.')
@@ -85,14 +90,20 @@ export default function HomePage() {
     if (sessionPollIntervalRef.current) return
 
     sessionPollIntervalRef.current = setInterval(() => {
-      console.log('[DEBUG] Checking for next session...')
       fetchSession()
     }, 3000)
   }
 
   useEffect(() => {
     fetchUser()
-    fetchSession()
+
+    // Initial fetch
+    fetchSession().then(() => {
+      // If no session was found on initial fetch, begin polling
+      if (!sessionActive) {
+        startPollingForNextSession()
+      }
+    })
 
     return () => {
       if (countdownIntervalRef.current)
@@ -120,7 +131,7 @@ export default function HomePage() {
       <button
         onClick={goToGamePage}
         disabled={!sessionActive}
-        className={`w-60 py-3 text-white font-semibold rounded transition ${
+        className={`w-60 py-3 text-white font-semibold rounded transition cursor-pointer ${
           sessionActive
             ? 'bg-black hover:bg-gray-800'
             : 'bg-gray-400 cursor-not-allowed'

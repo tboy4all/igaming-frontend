@@ -15,7 +15,7 @@ import GamePage from './pages/GamePage'
 function App() {
   return (
     <Router>
-      <ToastContainer />
+      <ToastContainer position='top-left' autoClose={3000} />
       <Routes>
         <Route path='/' element={<Navigate to='/login' />} />
         <Route path='/login' element={<LoginPage />} />

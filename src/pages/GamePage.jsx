@@ -16,7 +16,6 @@ export default function GamePage() {
   const [nextSessionCountdown, setNextSessionCountdown] = useState(10)
 
   const [endTime, setEndTime] = useState(null)
-  // const [countdownInterval, setCountdownInterval] = useState(null)
 
   const countdownIntervalRef = useRef(null)
 
@@ -46,25 +45,6 @@ export default function GamePage() {
       toast.error('Error fetching session info')
     }
   }
-
-  // const startCountdown = (endTimestamp) => {
-  //   clearInterval(countdownInterval)
-
-  //   const interval = setInterval(() => {
-  //     const now = Date.now()
-  //     const timeLeft = Math.floor((endTimestamp - now) / 1000)
-
-  //     if (timeLeft > 0) {
-  //       setCountdown(timeLeft)
-  //     } else {
-  //       clearInterval(interval)
-  //       setCountdown(0)
-  //       handleSessionEnded()
-  //     }
-  //   }, 1000)
-
-  //   setCountdownInterval(interval)
-  // }
 
   const startCountdown = (endTimestamp) => {
     if (countdownIntervalRef.current)
@@ -99,16 +79,11 @@ export default function GamePage() {
         const data = await res.json()
 
         if (res.ok && data.totalPlayers > 0) {
-          console.log(
-            '[DEBUG] Successful fetch with players:',
-            data.totalPlayers
-          )
           setResult(data.winningNumber)
           setPlayersCount(data.totalPlayers)
           setWinners(data.winners)
           setShowResult(true)
           setHasGuessed(false)
-          setUserGuess(null)
 
           // Start 10s countdown before new session
           let c = 10
@@ -118,6 +93,10 @@ export default function GamePage() {
             setNextSessionCountdown(c)
             if (c <= 0) {
               clearInterval(next)
+
+              // Reset states for new round
+              setUserGuess(null)
+              setShowResult(false)
               fetchSession()
             }
           }, 1000)
@@ -126,12 +105,25 @@ export default function GamePage() {
           if (attempts < maxAttempts) {
             setTimeout(tryFetchResult, 1000)
           } else {
-            // Show result even if no players found
-            console.warn('[DEBUG] Max retries reached. Showing result anyway.')
+            // 🚨 FIX: Still show result screen even if no players (or error)
             setResult(data.winningNumber || 'N/A')
             setPlayersCount(data.totalPlayers || 0)
             setWinners(data.winners || [])
             setShowResult(true)
+
+            // Start fallback countdown
+            let c = 10
+            setNextSessionCountdown(c)
+            const next = setInterval(() => {
+              c--
+              setNextSessionCountdown(c)
+              if (c <= 0) {
+                clearInterval(next)
+                setUserGuess(null)
+                setShowResult(false)
+                fetchSession()
+              }
+            }, 1000)
           }
         }
       } catch {
@@ -174,11 +166,6 @@ export default function GamePage() {
       toast.error('Submit failed')
     }
   }
-
-  // useEffect(() => {
-  //   fetchSession()
-  //   return () => clearInterval(countdownInterval)
-  // }, [])
 
   useEffect(() => {
     fetchSession()
