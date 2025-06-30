@@ -74,11 +74,8 @@ export default function GamePage() {
 
     const tryFetchResult = async () => {
       try {
-        console.log(`[DEBUG] Attempt ${attempts + 1} to fetch result`)
         const res = await fetch(`${API_BASE_URL}/api/v1/game/last-result`)
         const data = await res.json()
-
-        console.log('Result data:', data)
 
         if (res.ok && data.totalPlayers > 0) {
           setResult(data.winningNumber)
