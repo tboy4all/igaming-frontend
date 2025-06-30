@@ -32,7 +32,7 @@ npm install
 Create a `.env` file in the root and add:
 
 ```
-VITE_API_BASE_URL=https://igaming-backend-0y7x.onrender.com
+API_BASE_URL=https://igaming-backend-0y7x.onrender.com
 ```
 
 This tells the frontend where to send requests.

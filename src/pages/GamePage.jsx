@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { API_BASE_URL } from '../config'
 
@@ -16,7 +16,9 @@ export default function GamePage() {
   const [nextSessionCountdown, setNextSessionCountdown] = useState(10)
 
   const [endTime, setEndTime] = useState(null)
-  const [countdownInterval, setCountdownInterval] = useState(null)
+  // const [countdownInterval, setCountdownInterval] = useState(null)
+
+  const countdownIntervalRef = useRef(null)
 
   const token = localStorage.getItem('token')
 
@@ -45,23 +47,42 @@ export default function GamePage() {
     }
   }
 
-  const startCountdown = (endTimestamp) => {
-    clearInterval(countdownInterval)
+  // const startCountdown = (endTimestamp) => {
+  //   clearInterval(countdownInterval)
 
-    const interval = setInterval(() => {
+  //   const interval = setInterval(() => {
+  //     const now = Date.now()
+  //     const timeLeft = Math.floor((endTimestamp - now) / 1000)
+
+  //     if (timeLeft > 0) {
+  //       setCountdown(timeLeft)
+  //     } else {
+  //       clearInterval(interval)
+  //       setCountdown(0)
+  //       handleSessionEnded()
+  //     }
+  //   }, 1000)
+
+  //   setCountdownInterval(interval)
+  // }
+
+  const startCountdown = (endTimestamp) => {
+    if (countdownIntervalRef.current)
+      clearInterval(countdownIntervalRef.current)
+
+    countdownIntervalRef.current = setInterval(() => {
       const now = Date.now()
       const timeLeft = Math.floor((endTimestamp - now) / 1000)
 
       if (timeLeft > 0) {
         setCountdown(timeLeft)
       } else {
-        clearInterval(interval)
+        clearInterval(countdownIntervalRef.current)
+        countdownIntervalRef.current = null
         setCountdown(0)
         handleSessionEnded()
       }
     }, 1000)
-
-    setCountdownInterval(interval)
   }
 
   const handleSessionEnded = () => {
@@ -154,9 +175,18 @@ export default function GamePage() {
     }
   }
 
+  // useEffect(() => {
+  //   fetchSession()
+  //   return () => clearInterval(countdownInterval)
+  // }, [])
+
   useEffect(() => {
     fetchSession()
-    return () => clearInterval(countdownInterval)
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
+    }
   }, [])
 
   // --- 🎯 RESULT SCREEN ---
