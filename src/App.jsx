@@ -11,6 +11,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import './App.css'
 import HomePage from './pages/HomePage'
 import GamePage from './pages/GamePage'
+import NotFoundPage from './pages/NotFound'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path='/register' element={<RegisterPage />} />
         <Route path='/home' element={<HomePage />} />
         <Route path='/game' element={<GamePage />} />
+        <Route path='*' element={<NotFoundPage />} />
       </Routes>
     </Router>
   )
