@@ -1,150 +1,158 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState, useRef } from 'react'
-import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
-import { API_BASE_URL } from '../config'
+import { jwtDecode } from 'jwt-decode'
+import API from '../utils/api'
+import { io } from 'socket.io-client'
+import { toast } from 'react-toastify'
 
-export default function HomePage() {
-  const [user, setUser] = useState({ username: '', wins: 0, losses: 0 })
-  const [countdown, setCountdown] = useState(0)
-  const [sessionActive, setSessionActive] = useState(false)
-  const [endTime, setEndTime] = useState(null)
-
-  const navigate = useNavigate()
+const HomePage = () => {
   const token = localStorage.getItem('token')
-
-  const countdownIntervalRef = useRef(null)
-  const sessionPollIntervalRef = useRef(null)
-
-  const fetchUser = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const data = await res.json()
-      if (res.ok) {
-        const totalGames = data.totalGames || 0
-        const losses = totalGames - data.wins
-        setUser({ username: data.username, wins: data.wins, losses })
-      }
-    } catch {
-      toast.error('Failed to fetch user info.')
-    }
+  let decoded = {}
+  try {
+    decoded = jwtDecode(token)
+  } catch {
+    console.error('Invalid token')
   }
 
-  const fetchSession = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/game/active-session`)
-      const data = await res.json()
-      if (data.active) {
-        const end = new Date(data.endTime).getTime()
-        const now = Date.now()
-        const timeLeft = Math.floor((end - now) / 1000)
+  const username = decoded?.username || 'User'
+  const userId = decoded?.id
 
-        if (timeLeft > 0) {
-          setEndTime(end)
-          setCountdown(timeLeft)
-          setSessionActive(true)
-          startCountdown(end)
+  const [wins, setWins] = useState(0)
+  const [loses, setLoses] = useState(0)
+  const [countdown, setCountdown] = useState(0)
+  const [canJoin, setCanJoin] = useState(false)
+  const [topPlayers, setTopPlayers] = useState([])
 
-          // Stop polling once session becomes active
-          if (sessionPollIntervalRef.current) {
-            clearInterval(sessionPollIntervalRef.current)
-            sessionPollIntervalRef.current = null
-          }
-        }
-      } else {
-        setSessionActive(false)
-        setCountdown(0)
+  const socketRef = useRef(null)
+  const navigate = useNavigate()
 
-        // Ensure polling starts when no session is active
-        if (!sessionPollIntervalRef.current) {
-          startPollingForNextSession()
-        }
-      }
-    } catch {
-      toast.error('Failed to fetch session info.')
-    }
-  }
-
-  const startCountdown = (endTimestamp) => {
-    if (countdownIntervalRef.current)
-      clearInterval(countdownIntervalRef.current)
-
-    countdownIntervalRef.current = setInterval(() => {
-      const now = Date.now()
-      const timeLeft = Math.floor((endTimestamp - now) / 1000)
-
-      if (timeLeft > 0) {
-        setCountdown(timeLeft)
-      } else {
-        clearInterval(countdownIntervalRef.current)
-        setCountdown(0)
-        setSessionActive(false)
-        startPollingForNextSession()
-      }
-    }, 1000)
-  }
-
-  const startPollingForNextSession = () => {
-    if (sessionPollIntervalRef.current) return
-
-    sessionPollIntervalRef.current = setInterval(() => {
-      fetchSession()
-    }, 3000)
-  }
-
+  // 🔌 WebSocket connection
   useEffect(() => {
-    fetchUser()
+    socketRef.current = io('http://localhost:5000')
 
-    // Initial fetch
-    fetchSession().then(() => {
-      // If no session was found on initial fetch, begin polling
-      if (!sessionActive) {
-        startPollingForNextSession()
+    socketRef.current.on('sessionUpdate', (data) => {
+      const { timeLeft, isJoinable } = data
+      setCountdown(timeLeft)
+      setCanJoin(isJoinable)
+
+      if (!isJoinable) {
+        setCanJoin(false)
       }
     })
 
-    return () => {
-      if (countdownIntervalRef.current)
-        clearInterval(countdownIntervalRef.current)
-      if (sessionPollIntervalRef.current)
-        clearInterval(sessionPollIntervalRef.current)
-    }
+    return () => socketRef.current?.disconnect()
   }, [])
 
-  const goToGamePage = () => {
-    navigate('/game')
+  // 📊 Fetch user stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await API.get('/game/user-stats', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        setWins(res.data.wins)
+        setLoses(res.data.loses)
+      } catch (err) {
+        console.error('Failed to fetch stats:', err)
+      }
+    }
+
+    if (token) fetchStats()
+  }, [token])
+
+  // 🏆 Fetch leaderboard
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await API.get('/game/top-players')
+        setTopPlayers(res.data.slice(0, 5)) // Show only top 5
+      } catch (err) {
+        console.error('Failed to fetch leaderboard:', err)
+      }
+    }
+
+    fetchLeaderboard()
+  }, [])
+
+  // 🔘 Join button logic
+  const handleJoin = async () => {
+    try {
+      await API.post(
+        '/game/enter',
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      navigate('/game')
+    } catch {
+      toast.error('❌ Failed to join session')
+    }
   }
 
   return (
-    <div className='min-h-screen bg-gray-200 flex flex-col justify-center items-center px-4'>
-      <div className='absolute top-5 right-5 text-gray-700 font-medium'>
-        Hi {user.username}
+    <div className='min-h-screen bg-gray-200 p-6 flex flex-col items-center justify-center text-center relative'>
+      <div className='absolute top-4 right-4 text-black font-semibold'>
+        Hi {username}
       </div>
 
-      <div className='text-center space-y-2 mb-10'>
-        <p className='text-lg'>Total Wins: {user.wins}</p>
-        <p className='text-lg'>Total Losses: {user.losses}</p>
+      <div className='text-lg mb-2'>
+        Total Wins: <strong>{wins}</strong>
+      </div>
+      <div className='text-lg mb-6'>
+        Total Loses: <strong>{loses}</strong>
       </div>
 
       <button
-        onClick={goToGamePage}
-        disabled={!sessionActive}
-        className={`w-60 py-3 text-white font-semibold rounded transition cursor-pointer ${
-          sessionActive
-            ? 'bg-black hover:bg-gray-800'
-            : 'bg-gray-400 cursor-not-allowed'
+        onClick={handleJoin}
+        disabled={!canJoin}
+        className={`w-64 py-3 bg-black text-white rounded text-lg mb-4 ${
+          !canJoin
+            ? 'opacity-50 cursor-not-allowed'
+            : 'hover:bg-gray-800 cursor-pointer'
         }`}
       >
         JOIN
       </button>
 
-      <p className='mt-4 text-red-600 text-center'>
-        {sessionActive
+      <p className='text-red-600 text-base'>
+        {canJoin
           ? `There is an active session, you can join in ${countdown}s`
-          : 'Waiting for the next session...'}
+          : 'Waiting for next session...'}
       </p>
+
+      {/* 🏆 Top Players Preview */}
+      <div className='mt-10 w-full max-w-md text-left bg-white rounded-lg p-4 shadow'>
+        <h2 className='text-lg font-bold text-gray-800 mb-2'>🏆 Top Players</h2>
+        <ul>
+          {topPlayers.length === 0 ? (
+            <li className='text-sm text-gray-500'>No players yet</li>
+          ) : (
+            topPlayers.map((player, index) => (
+              <li
+                key={player.username}
+                className='flex justify-between py-1 border-b border-gray-200 text-sm text-gray-700'
+              >
+                <span>
+                  #{index + 1} {player.username}
+                </span>
+                <span>{player.wins} wins</span>
+              </li>
+            ))
+          )}
+        </ul>
+
+        <div className='text-right mt-2'>
+          <a
+            href='/leaderboard'
+            className='text-blue-600 text-sm hover:underline'
+          >
+            View full leaderboard →
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
+
+export default HomePage

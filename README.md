@@ -72,14 +72,35 @@ Your app should now be running at [http://localhost:5173](http://localhost:5173)
 
 The frontend communicates with the following backend endpoints:
 
-- `POST /api/v1/auth/register` – Register a new user
-- `POST /api/v1/auth/login` – Login user and receive JWT
-- `GET /api/v1/game/active-session` – Get current session status
-- `POST /api/v1/game/join` – Join a session with a guess
-- `GET /api/v1/game/last-result` – Get result after session ends
-- `GET /api/v1/game/leaderboard` – Fetch top 10 players by wins
+- `POST /api/auth/register` – Register a new user
+- `POST /api/auth/login` – Login user and receive JWT
+- `GET /api/game/session-status` – Get current session status
+- `GET /api/game/session` – Get Active session
+- `POST /api/game/join` – Join a session
+- `POST /api/game/enter` – Enter a session with a guess
+- `GET /api/game/user-stat` – Get users status
+- `POST /api/game/start` – Start Session
+- `POST /api/game/end` – End Session
+- `GET /api/game/top-players` – Fetch top 10 players by wins
 
 ---
+
+### 📘 API Documentation (Swagger)
+
+This project includes Swagger (OpenAPI) for exploring and testing the API interactively.
+
+#### 🔗 Access Swagger UI for testing all endpoints
+
+http://localhost:5000/api-docs
+
+#### 📦 Powered by:
+
+- swagger-ui-express
+- swagger-jsdoc
+
+JSDoc-style annotations are written in the routes/\*.js files.
+
+You can test all endpoints (including /auth/login, /game/join, etc.) from the Swagger interface with real data.
 
 ## 📦 Production Build
 

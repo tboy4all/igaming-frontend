@@ -1,47 +1,62 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import API from '../utils/api'
+import { toast } from 'react-toastify'
 
-export default function AuthForm({
-  onSubmit,
-  title,
-  buttonText,
-  redirectText,
-  redirectLink,
-  redirectLinkText,
-}) {
+const AuthForm = ({ onAuth }) => {
   const [username, setUsername] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    onSubmit(username)
+    if (!username.trim()) return toast.error('Username is required')
+
+    setLoading(true)
+
+    try {
+      const res = await API.post('/auth/login', { username })
+      localStorage.setItem('token', res.data.token)
+      toast.success('Welcome back!')
+      onAuth()
+    } catch {
+      try {
+        const res = await API.post('/auth/register', { username })
+        localStorage.setItem('token', res.data.token)
+        toast.success('Account created!')
+        onAuth()
+      } catch {
+        toast.error('❌ Username already taken or error occurred.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className='max-w-md mx-auto mt-20 p-8 bg-white shadow-xl rounded-xl'>
-      <h2 className='text-2xl font-bold mb-6 text-center'>{title}</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type='text'
-          placeholder='Enter username'
-          className='w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring focus:border-blue-300'
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <button
-          type='submit'
-          className='w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer'
-        >
-          {buttonText}
-        </button>
-      </form>
-
-      <p className='mt-4 text-center text-sm text-gray-600'>
-        {redirectText}{' '}
-        <Link to={redirectLink} className='text-blue-600 hover:underline'>
-          {redirectLinkText}
-        </Link>
-      </p>
-    </div>
+    <form
+      onSubmit={handleSubmit}
+      className='bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 w-full max-w-md mx-auto mt-20'
+    >
+      <h2 className='text-2xl font-bold mb-6 text-center'>Join iGaming</h2>
+      <input
+        type='text'
+        placeholder='Enter username'
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        className='w-full px-3 py-2 mb-4 border rounded'
+        required
+        autoFocus
+        disabled={loading}
+        autoComplete='username'
+      />
+      <button
+        type='submit'
+        disabled={loading}
+        className='w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer'
+      >
+        {loading ? 'Loading...' : 'Login / Register'}
+      </button>
+    </form>
   )
 }
+
+export default AuthForm
