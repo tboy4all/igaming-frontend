@@ -5,6 +5,9 @@ import API from '../utils/api'
 import { io } from 'socket.io-client'
 import { toast } from 'react-toastify'
 
+const SOCKET_URL =
+  import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'
+
 const HomePage = () => {
   const token = localStorage.getItem('token')
   let decoded = {}
@@ -28,7 +31,7 @@ const HomePage = () => {
 
   // 🔌 WebSocket connection
   useEffect(() => {
-    socketRef.current = io('http://localhost:5000')
+    socketRef.current = io(SOCKET_URL)
 
     socketRef.current.on('sessionUpdate', (data) => {
       const { timeLeft, isJoinable } = data

@@ -5,6 +5,9 @@ import { io } from 'socket.io-client'
 import API from '../utils/api'
 import { toast } from 'react-toastify'
 
+const SOCKET_URL =
+  import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'
+
 const GamePage = () => {
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
@@ -19,7 +22,7 @@ const GamePage = () => {
 
   // WebSocket connection for live updates
   useEffect(() => {
-    socketRef.current = io('http://localhost:5000')
+    socketRef.current = io(SOCKET_URL)
 
     // ⏱️ Countdown + join count
     socketRef.current.on('sessionUpdate', (data) => {
