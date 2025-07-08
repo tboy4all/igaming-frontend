@@ -6,7 +6,10 @@ import API from '../utils/api'
 import { toast } from 'react-toastify'
 
 const SOCKET_URL =
-  import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'
+  (import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL)?.replace(
+    /\/api\/?$/,
+    ''
+  ) || 'http://localhost:5000'
 
 const GamePage = () => {
   const navigate = useNavigate()
