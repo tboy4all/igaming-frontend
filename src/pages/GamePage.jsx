@@ -68,16 +68,21 @@ const GamePage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gray-300 p-6 flex flex-col items-center justify-center text-center relative'>
-      <div className='absolute top-6 right-6 text-lg'>
+    <div className='min-h-screen bg-gray-300 p-4 flex flex-col items-center justify-center text-center relative'>
+      <div className='absolute top-4 right-4 text-sm sm:text-lg'>
         Countdown timer
         <br />
-        <span className='text-4xl font-bold'>{timeLeft}s</span>
+        <span className='text-3xl sm:text-4xl font-bold'>{timeLeft}s</span>
       </div>
 
-      <h2 className='text-xl mb-6'>Pick a random number from 1 - 10</h2>
+      <h2 className='text-lg sm:text-xl mb-4 sm:mb-6'>
+        Pick a random number from 1 - 10
+      </h2>
 
-      <form onSubmit={handleSubmit} className='mb-4'>
+      <form
+        onSubmit={handleSubmit}
+        className='mb-4 w-full max-w-xs sm:max-w-sm flex flex-col sm:flex-row gap-3 sm:gap-4'
+      >
         <input
           type='number'
           min='1'
@@ -85,13 +90,13 @@ const GamePage = () => {
           value={pickedNumber}
           disabled={submitted}
           onChange={(e) => setPickedNumber(e.target.value)}
-          className='w-48 px-4 py-2 rounded border border-gray-400 text-center text-lg'
+          className='flex-1 px-4 py-2 rounded border border-gray-400 text-center text-lg'
           placeholder='Enter a number'
         />
         <button
           type='submit'
           disabled={submitted}
-          className='ml-4 px-6 py-2 bg-black text-white rounded hover:bg-gray-800 cursor-pointer'
+          className='px-6 py-2 bg-black text-white rounded hover:bg-gray-800 cursor-pointer w-full sm:w-auto'
         >
           {submitted ? 'Submitted' : 'Submit'}
         </button>
